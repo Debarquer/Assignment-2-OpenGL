@@ -85,6 +85,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Fragment.glsl" />
+    <None Include="Geometry.glsl" />
     <None Include="VertexShader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

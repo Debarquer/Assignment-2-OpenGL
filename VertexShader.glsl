@@ -1,16 +1,20 @@
 #version 400
-layout(location = 0) in vec3 vertex_position;
-layout(location = 1) in vec3 vertex_color;
-
-out vec3 color;
-
-//Transforms
-uniform mat4 world;
-uniform mat4 view;
-uniform mat4 projection;
-
-void main() 
+in vec4 vertex_Position;
+in vec4 vertex_Normal;
+ 
+out Vertex
 {
-	color = vertex_color;
-	gl_Position = vec4(vertex_position, 1.0f);
+    vec4 normal;
+    vec4 color;
+} vertex;
+
+uniform mat4 projection;
+uniform mat4 view;
+uniform mat4 model;
+ 
+void main()
+{
+  gl_Position = vertex_Position;
+  vertex.normal = vertex_Normal;
+  vertex.color =  vec4(1.0, 1.0, 0.0, 1.0);
 }

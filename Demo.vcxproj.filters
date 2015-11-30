@@ -26,5 +26,8 @@
     <None Include="Fragment.glsl">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="Geometry.glsl">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

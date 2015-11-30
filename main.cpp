@@ -65,10 +65,19 @@ void CreateShaders()
 	glShaderSource(fs, 1, &shaderTextPtr, nullptr);
 	glCompileShader(fs);
 
+	GLuint gs = glCreateShader(GL_GEOMETRY_SHADER);
+	shaderFile.open("Geometry.glsl");
+	shaderText.assign((std::istreambuf_iterator<char>(shaderFile)), std::istreambuf_iterator<char>());
+	shaderFile.close();
+	shaderTextPtr = shaderText.c_str();
+	glShaderSource(gs, 1, &shaderTextPtr, nullptr);
+	glCompileShader(gs);
+
 	//link shader program (connect vs and ps)
 	gShaderProgram = glCreateProgram();
 	glAttachShader(gShaderProgram, fs);
 	glAttachShader(gShaderProgram, vs);
+	glAttachShader(gShaderProgram, gs);
 	glLinkProgram(gShaderProgram);
 }
 
@@ -85,10 +94,12 @@ void CreateTriangleData()
 	TriangleVertex triangleVertices[6] = 
 	{
 		// pos and color for each vertex
-		{ 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f },
+		{ -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f },
 		{ 0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f },
 		{ -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f },
-		{ -0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f }
+		{ -0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f },
+		{ 0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f },
+		{ 0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f }
 	};
 
 	// Vertex Array Object (VAO) 
@@ -110,13 +121,13 @@ void CreateTriangleData()
 	GLuint vertexPos = glGetAttribLocation(gShaderProgram, "vertex_position");
 	// specify that: the vertex attribute "vertexPos", of 3 elements of type FLOAT, not normalized, with STRIDE != 0,
 	//               starts at offset 0 of the gVertexBuffer (it is implicitly bound!)
-	glVertexAttribPointer(vertexPos, 4,    GL_FLOAT, GL_FALSE,     sizeof(TriangleVertex), BUFFER_OFFSET(0));
+	glVertexAttribPointer(vertexPos, 6,    GL_FLOAT, GL_FALSE,     sizeof(TriangleVertex), BUFFER_OFFSET(0));
 
 	// query where which slot corresponds to the input vertex_color in the Vertex Shader 
 	GLuint vertexColor = glGetAttribLocation(gShaderProgram, "vertex_color");
 	// specify that: the vertex attribute "vertex_color", of 3 elements of type FLOAT, not normalized, with STRIDE != 0,
 	//               starts at offset (16 bytes) of the gVertexBuffer 
-	glVertexAttribPointer(vertexColor, 4,    GL_FLOAT, GL_FALSE,     sizeof(TriangleVertex), BUFFER_OFFSET(sizeof(float)*4));
+	glVertexAttribPointer(GL_TRIANGLE_STRIP, 6,    GL_FLOAT, GL_FALSE,     sizeof(TriangleVertex), BUFFER_OFFSET(sizeof(float)*6));
 }
 
 void SetViewport()
@@ -160,7 +171,7 @@ void Render()
 	glBindVertexArray(gVertexAttribute);
 	
 	// draw 4 vertices starting from index 0 in the vertex array currently bound (VAO), with current in-use shader
-	glDrawArrays(GL_QUADS, 0, 4);
+	glDrawArrays(GL_QUADS, 0, 6);
 }
 
 int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow )

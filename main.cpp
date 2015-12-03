@@ -43,6 +43,9 @@ glm::mat4 projection;
 
 void CreateShaders()
 {
+	GLint result;
+	GLint length;
+
 	//create vertex shader
 	GLuint vs = glCreateShader(GL_VERTEX_SHADER);
 	// open glsl file and put it in a string
@@ -55,8 +58,17 @@ void CreateShaders()
 	glShaderSource(vs, 1, &shaderTextPtr, nullptr);
 	// ask GL to compile it
 	glCompileShader(vs);
+	glGetShaderiv(vs, GL_COMPILE_STATUS, &result);
+	if (!result)
+	{
+		glGetShaderiv(vs, GL_INFO_LOG_LENGTH, &length);
+		char* message = new char[length];
+		glGetShaderInfoLog(vs, length, NULL, message);
+		OutputDebugStringA(message);
+		delete[] message;
+	}
 
-	//create fragment shader | same process.
+	//create fragment shader | same process.	
 	GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
 	shaderFile.open("Fragment.glsl");
 	shaderText.assign((std::istreambuf_iterator<char>(shaderFile)), std::istreambuf_iterator<char>());
@@ -64,6 +76,15 @@ void CreateShaders()
 	shaderTextPtr = shaderText.c_str();
 	glShaderSource(fs, 1, &shaderTextPtr, nullptr);
 	glCompileShader(fs);
+	glGetShaderiv(fs, GL_COMPILE_STATUS, &result);
+	if (!result)
+	{
+		glGetShaderiv(fs, GL_INFO_LOG_LENGTH, &length);
+		char* message = new char[length];
+		glGetShaderInfoLog(fs, length, NULL, message);
+		OutputDebugStringA(message);
+		delete[] message;
+	}
 
 	GLuint gs = glCreateShader(GL_GEOMETRY_SHADER);
 	shaderFile.open("Geometry.glsl");
@@ -72,6 +93,15 @@ void CreateShaders()
 	shaderTextPtr = shaderText.c_str();
 	glShaderSource(gs, 1, &shaderTextPtr, nullptr);
 	glCompileShader(gs);
+	glGetShaderiv(gs, GL_COMPILE_STATUS, &result);
+	if (!result)
+	{
+		glGetShaderiv(gs, GL_INFO_LOG_LENGTH, &length);
+		char* message = new char[length];
+		glGetShaderInfoLog(gs, length, NULL, message);
+		OutputDebugStringA(message);
+		delete[] message;
+	}
 
 	//link shader program (connect vs and ps)
 	gShaderProgram = glCreateProgram();
@@ -79,6 +109,16 @@ void CreateShaders()
 	glAttachShader(gShaderProgram, vs);
 	glAttachShader(gShaderProgram, gs);
 	glLinkProgram(gShaderProgram);
+
+	glGetProgramiv(gShaderProgram, GL_LINK_STATUS, &result);
+	if (!result)
+	{
+		glGetProgramiv(gShaderProgram, GL_INFO_LOG_LENGTH, &length);
+		char* message = new char[length];
+		glGetProgramInfoLog(gShaderProgram, length, NULL, message);
+		OutputDebugStringA(message);
+		delete[] message;
+	}
 }
 
 void CreateTriangleData()
@@ -95,11 +135,9 @@ void CreateTriangleData()
 	{
 		// pos and color for each vertex
 		{ -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f },
-		{ 0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f },
-		{ -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f },
-		{ -0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f },
-		{ 0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f },
-		{ 0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f }
+		{ -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f },
+		{ 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f },
+		{ 0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f }
 	};
 
 	// Vertex Array Object (VAO) 
@@ -121,13 +159,13 @@ void CreateTriangleData()
 	GLuint vertexPos = glGetAttribLocation(gShaderProgram, "vertex_position");
 	// specify that: the vertex attribute "vertexPos", of 3 elements of type FLOAT, not normalized, with STRIDE != 0,
 	//               starts at offset 0 of the gVertexBuffer (it is implicitly bound!)
-	glVertexAttribPointer(vertexPos, 6,    GL_FLOAT, GL_FALSE,     sizeof(TriangleVertex), BUFFER_OFFSET(0));
+	glVertexAttribPointer(vertexPos, 4,    GL_FLOAT, GL_FALSE,     sizeof(TriangleVertex), BUFFER_OFFSET(0));
 
 	// query where which slot corresponds to the input vertex_color in the Vertex Shader 
 	GLuint vertexColor = glGetAttribLocation(gShaderProgram, "vertex_color");
 	// specify that: the vertex attribute "vertex_color", of 3 elements of type FLOAT, not normalized, with STRIDE != 0,
 	//               starts at offset (16 bytes) of the gVertexBuffer 
-	glVertexAttribPointer(GL_TRIANGLE_STRIP, 6,    GL_FLOAT, GL_FALSE,     sizeof(TriangleVertex), BUFFER_OFFSET(sizeof(float)*6));
+	glVertexAttribPointer(vertexColor, 4, GL_FLOAT, GL_FALSE, sizeof(TriangleVertex), BUFFER_OFFSET(sizeof(float) * 4));
 }
 
 void SetViewport()
@@ -146,7 +184,7 @@ void Render()
 	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, -2.0f);
 
 	glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-	glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
+	glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget); 
 
 	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 	glm::vec3 cameraRight = glm::normalize(glm::cross(cameraDirection, up));
@@ -171,7 +209,7 @@ void Render()
 	glBindVertexArray(gVertexAttribute);
 	
 	// draw 4 vertices starting from index 0 in the vertex array currently bound (VAO), with current in-use shader
-	glDrawArrays(GL_QUADS, 0, 6);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
 int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow )

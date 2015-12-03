@@ -10,6 +10,9 @@
 #include <gl/glew.h>
 #include <gl/GL.h>
 
+#include "bth_image.h"
+#include "SOIL\src\SOIL.h"
+
 //GLM - Mathematics library
 #include "glm\glm\glm.hpp"
 #include "glm\glm\gtc\matrix_transform.hpp"
@@ -40,6 +43,9 @@ void unloadshader(GLubyte** ShaderSource);
 glm::mat4 world;
 glm::mat4 view;
 glm::mat4 projection;
+
+//Texture
+GLuint texture;
 
 void CreateShaders()
 {
@@ -129,15 +135,16 @@ void CreateTriangleData()
 	{
 		float x, y, z;
 		float r, g, b;
+		float tX, tY;
 	};
 	// create the actual data in plane Z = 0
-	TriangleVertex triangleVertices[6] = 
+	TriangleVertex triangleVertices[4] = 
 	{
 		// pos and color for each vertex
-		{ -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f },
-		{ -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f },
-		{ 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f },
-		{ 0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f }
+		{ -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+		{ -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f },
+		{ 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f },
+		{ 0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f}
 	};
 
 	// Vertex Array Object (VAO) 
@@ -147,6 +154,7 @@ void CreateTriangleData()
 	// this activates the first and second attributes of this VAO
 	glEnableVertexAttribArray(0); 
 	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
 
 	// create a vertex buffer object (VBO) id
 	glGenBuffers(1, &gVertexBuffer);
@@ -159,13 +167,16 @@ void CreateTriangleData()
 	GLuint vertexPos = glGetAttribLocation(gShaderProgram, "vertex_position");
 	// specify that: the vertex attribute "vertexPos", of 3 elements of type FLOAT, not normalized, with STRIDE != 0,
 	//               starts at offset 0 of the gVertexBuffer (it is implicitly bound!)
-	glVertexAttribPointer(vertexPos, 4,    GL_FLOAT, GL_FALSE,     sizeof(TriangleVertex), BUFFER_OFFSET(0));
+	glVertexAttribPointer(vertexPos, 3, GL_FLOAT, GL_FALSE, sizeof(TriangleVertex), BUFFER_OFFSET(0));
 
 	// query where which slot corresponds to the input vertex_color in the Vertex Shader 
 	GLuint vertexColor = glGetAttribLocation(gShaderProgram, "vertex_color");
 	// specify that: the vertex attribute "vertex_color", of 3 elements of type FLOAT, not normalized, with STRIDE != 0,
 	//               starts at offset (16 bytes) of the gVertexBuffer 
-	glVertexAttribPointer(vertexColor, 4, GL_FLOAT, GL_FALSE, sizeof(TriangleVertex), BUFFER_OFFSET(sizeof(float) * 4));
+	glVertexAttribPointer(vertexColor, 3, GL_FLOAT, GL_FALSE, sizeof(TriangleVertex), BUFFER_OFFSET(sizeof(float) * 3));
+
+	GLuint texPos = glGetAttribLocation(gShaderProgram, "texture_position");
+	glVertexAttribPointer(texPos, 2, GL_FLOAT, GL_FALSE, sizeof(TriangleVertex), BUFFER_OFFSET(sizeof(float) * 6));
 }
 
 void SetViewport()
@@ -177,8 +188,13 @@ void Render()
 {
 	// set the color TO BE used
 	glClearColor(0, 0, 0, 1);
-	// use the color to clear the color buffer
-	glClear(GL_COLOR_BUFFER_BIT);
+	// use the color to clear the color buffer and clear depth buffer
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// Bind Textures using texture units
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glUniform1i(glGetUniformLocation(gShaderProgram, "ourTexture"), 0);
 
 	//Set transform variables
 	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, -2.0f);
@@ -192,7 +208,7 @@ void Render()
 	glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
 	
 	//Modify transforms
-	world = glm::rotate(world, 0.0002f, glm::vec3(0.0f, 1.0f, 0.0f));
+	world = glm::rotate(world, -0.0004f, glm::vec3(0.0f, 1.0f, 0.0f));
 	view = glm::lookAt(cameraPos, cameraTarget, up);
 	projection = glm::perspective(3.14f*0.45f, 640.0f/480.0f, 0.5f, 20.0f);
 
@@ -208,8 +224,30 @@ void Render()
 	glUseProgram(gShaderProgram);
 	glBindVertexArray(gVertexAttribute);
 	
+	glBindTexture(GL_TEXTURE_2D, texture);
 	// draw 4 vertices starting from index 0 in the vertex array currently bound (VAO), with current in-use shader
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+}
+
+void loadTexture()
+{
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	// Set our texture parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// Set texture wrapping to GL_REPEAT
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// Set texture filtering
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	//int width, height;
+	//unsigned char* image = SOIL_load_image("bth_image.h", &width, &height, 0, SOIL_LOAD_RGBA);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, BTH_IMAGE_WIDTH, BTH_IMAGE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, BTH_IMAGE_DATA);
+	//glGenerateMipmap(GL_TEXTURE_2D);
+
+	//glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow )
@@ -224,7 +262,11 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 
 		glewInit(); //3. Initiera The OpenGL Extension Wrangler Library (GLEW)
 
+		glEnable(GL_DEPTH_TEST);
+
 		SetViewport(); //4. Sätt viewport
+
+		loadTexture();
 
 		CreateShaders(); //5. Skapa vertex- och fragment-shaders
 
@@ -311,8 +353,7 @@ HGLRC CreateOpenGLContext(HWND wndHandle)
 		1,                                // version number  
 		PFD_DRAW_TO_WINDOW |              // support window  
 		PFD_SUPPORT_OPENGL |              // support OpenGL  
-		PFD_DOUBLEBUFFER |                // double buffered
-		PFD_DEPTH_DONTCARE,               // disable depth buffer <-- added by Stefan
+		PFD_DOUBLEBUFFER,                 // double buffered,
 		PFD_TYPE_RGBA,                    // RGBA type  
 		32,                               // 32-bit color depth  
 		0, 0, 0, 0, 0, 0,                 // color bits ignored  

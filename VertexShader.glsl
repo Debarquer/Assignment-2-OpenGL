@@ -13,10 +13,14 @@ uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 world;
 uniform sampler2D ourTexture;
- 
+
+out vec3 gPosVG;
+
 void main()
 {
   gl_Position = vec4(vertex_position, 1.0);
+  gPosVG = vec3(world * gl_Position);
+
   vertexVG.color =  vec4(vertex_color, 1.0);
   vertexVG.texPos = vec2(1.0 - texture_position.x, texture_position.y);
 }

@@ -43,6 +43,7 @@ void unloadshader(GLubyte** ShaderSource);
 glm::mat4 world;
 glm::mat4 view;
 glm::mat4 projection;
+glm::vec3 lightPosition;
 
 //Texture
 GLuint texture;
@@ -141,10 +142,10 @@ void CreateTriangleData()
 	TriangleVertex triangleVertices[4] = 
 	{
 		// pos and color for each vertex
-		{ -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f },
-		{ -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f },
-		{ 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f },
-		{ 0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f}
+		{ -0.5f, 0.5f, 0.0f,		0.5f, 0.5f, 0.5f,		0.0f, 0.0f },
+		{ -0.5f, -0.5f, 0.0f,		0.5f, 0.5f, 0.5f,		0.0f, 1.0f },
+		{ 0.5f, 0.5f, 0.0f,		    0.5f, 0.5f, 0.5f,		1.0f, 0.0f },
+		{ 0.5f, -0.5f, 0.0f,		0.5f, 0.5f, 0.5f,		1.0f, 1.0f}
 	};
 
 	// Vertex Array Object (VAO) 
@@ -196,6 +197,9 @@ void Render()
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glUniform1i(glGetUniformLocation(gShaderProgram, "ourTexture"), 0);
 
+	//Set the position of the light
+	lightPosition = glm::vec3(0.0f, 0.0f, -2.5f);
+
 	//Set transform variables
 	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, -2.0f);
 
@@ -208,7 +212,7 @@ void Render()
 	glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
 	
 	//Modify transforms
-	world = glm::rotate(world, -0.0004f, glm::vec3(0.0f, 1.0f, 0.0f));
+	world = glm::rotate(world, -0.0002f, glm::vec3(0.0f, 1.0f, 0.0f));
 	view = glm::lookAt(cameraPos, cameraTarget, up);
 	projection = glm::perspective(3.14f*0.45f, 640.0f/480.0f, 0.5f, 20.0f);
 
@@ -216,10 +220,12 @@ void Render()
 	GLuint worldLoc = glGetUniformLocation(gShaderProgram, "world");
 	GLuint viewLoc = glGetUniformLocation(gShaderProgram, "view");
 	GLuint projectionLoc = glGetUniformLocation(gShaderProgram, "projection");
+	GLuint lightPositionLoc = glGetUniformLocation(gShaderProgram, "lightPosition");
 
 	glUniformMatrix4fv(worldLoc, 1, GL_FALSE, glm::value_ptr(world));
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+	glUniform3f(lightPositionLoc, lightPosition.x, lightPosition.y, lightPosition.z);
 
 	glUseProgram(gShaderProgram);
 	glBindVertexArray(gVertexAttribute);

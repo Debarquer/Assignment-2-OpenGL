@@ -23,6 +23,14 @@
 
 using namespace std;
 
+const int numberOfBoxes = 100;
+const int numberOfVertices = numberOfBoxes*6;
+const int numberOfBoxesWidth = 1;
+const int numberOfBoxesHeight = 1;
+
+const int width = 640;
+const int height = 480;
+
 HWND InitWindow(HINSTANCE hInstance);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 HGLRC CreateOpenGLContext(HWND wndHandle);
@@ -139,14 +147,54 @@ void CreateTriangleData()
 		float tX, tY;
 	};
 	// create the actual data in plane Z = 0
-	TriangleVertex triangleVertices[4] = 
+	TriangleVertex triangleVertices[numberOfVertices * numberOfBoxesWidth * numberOfBoxesHeight];
+
+	for (int y = 0; y < numberOfBoxesHeight; y++)
 	{
-		// pos and color for each vertex
-		{ -0.5f, 0.5f, 0.0f,		0.5f, 0.5f, 0.5f,		0.0f, 0.0f },
-		{ -0.5f, -0.5f, 0.0f,		0.5f, 0.5f, 0.5f,		0.0f, 1.0f },
-		{ 0.5f, 0.5f, 0.0f,		    0.5f, 0.5f, 0.5f,		1.0f, 0.0f },
-		{ 0.5f, -0.5f, 0.0f,		0.5f, 0.5f, 0.5f,		1.0f, 1.0f}
-	};
+		for (int x = 0; x < numberOfBoxesWidth; x++)
+		{
+			float z = 0;
+			for (int i = 0; i < numberOfVertices; i++)
+			{
+				switch (i % 6)
+				{
+				case 0:
+				{
+					triangleVertices[i + x*numberOfVertices + y*numberOfVertices*numberOfBoxesHeight] = { 1.0f * x + -0.5f, 1.0f * y + 0.5f, z * 1.0f,		0.5f, 0.5f, 0.5f,		0.0f, 0.0f };
+
+					break;
+				}
+				case 1:
+				{
+					triangleVertices[i + x*numberOfVertices + y*numberOfVertices*numberOfBoxesHeight] = { 1.0f * x + -0.5f, 1.0f * y + -0.5f, z * 1.0f,		0.5f, 0.5f, 0.5f,		0.0f, 1.0f };
+					break;
+				}
+				case 2:
+				{
+					triangleVertices[i + x*numberOfVertices + y*numberOfVertices*numberOfBoxesHeight] = { 1.0f * x + 0.5f, 1.0f * y + -0.5f, z * 1.0f,		0.5f, 0.5f, 0.5f,		1.0f, 1.0f };
+					break;
+				}
+				case 3:
+				{
+					triangleVertices[i + x*numberOfVertices + y*numberOfVertices*numberOfBoxesHeight] = { 1.0f * x + -0.5f, 1.0f * y + 0.5f, z * 1.0f,		0.5f, 0.5f, 0.5f,		0.0f, 0.0f };
+					break;
+				}
+				case 4:
+				{
+					triangleVertices[i + x*numberOfVertices + y*numberOfVertices*numberOfBoxesHeight] = { 1.0f * x + 0.5f, 1.0f * y + -0.5f, z * 1.0f,		0.5f, 0.5f, 0.5f,		1.0f, 1.0f };
+					break;
+				}
+				case 5:
+				{
+					triangleVertices[i + x*numberOfVertices + y*numberOfVertices*numberOfBoxesHeight] = { 1.0f * x + 0.5f, 1.0f * y + 0.5f,  z * 1.0f,		0.5f, 0.5f, 0.5f,		1.0f, 0.0f };
+					z++;
+					break;
+				}
+				}
+			}
+		}
+	}
+	
 
 	// Vertex Array Object (VAO) 
 	glGenVertexArrays(1, &gVertexAttribute);
@@ -182,7 +230,7 @@ void CreateTriangleData()
 
 void SetViewport()
 {
-	glViewport(0, 0, 640, 480);
+	glViewport(0, 0, width, height);
 }
 
 void Render()
@@ -201,7 +249,7 @@ void Render()
 	lightPosition = glm::vec3(0.0f, 0.0f, -2.5f);
 
 	//Set transform variables
-	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, -2.0f);
+	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, -1.0f);
 
 	glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget); 
@@ -212,9 +260,9 @@ void Render()
 	glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
 	
 	//Modify transforms
-	world = glm::rotate(world, -0.0002f, glm::vec3(0.0f, 1.0f, 0.0f));
+	world = glm::rotate(world, -0.0001f, glm::vec3(0.0f, 1.0f, 0.0f));
 	view = glm::lookAt(cameraPos, cameraTarget, up);
-	projection = glm::perspective(3.14f*0.45f, 640.0f/480.0f, 0.5f, 20.0f);
+	projection = glm::perspective(3.14f*0.45f, 640.0f/480.0f, 0.5f, 200.0f);
 
 	//Add transform to the shader
 	GLuint worldLoc = glGetUniformLocation(gShaderProgram, "world");
@@ -232,7 +280,7 @@ void Render()
 	
 	glBindTexture(GL_TEXTURE_2D, texture);
 	// draw 4 vertices starting from index 0 in the vertex array currently bound (VAO), with current in-use shader
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glDrawArrays(GL_TRIANGLES, 0, numberOfVertices * numberOfBoxesWidth * numberOfBoxesHeight);
 }
 
 void loadTexture()
@@ -315,7 +363,7 @@ HWND InitWindow(HINSTANCE hInstance)
 	if( !RegisterClassEx(&wcex) )
 		return false;
 
-	RECT rc = { 0, 0, 640, 480 };
+	RECT rc = { 0, 0, width, height };
 	AdjustWindowRect( &rc, WS_OVERLAPPEDWINDOW, FALSE );
 	
 	HWND handle = CreateWindow(

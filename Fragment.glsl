@@ -25,11 +25,9 @@ void main()
 	//Calculate the angle between the light and the point
 	float angle = max(dot(lightNor, posNor), 0.0);
 
-	//If the angle is less than zero then we are lighting from behind
-	//only applicable to ambient afaik
-	//if(angle < 0)
-		//angle = 0;
+	Out_Color = angle * texture(ourTexture, vertexGF.texPos);
 
-	Out_Color = angle * texture(ourTexture, vertexGF.texPos) +  texture(ourTexture, vertexGF.texPos) * 0.1;
+	if(Out_Color.w < 0.2)
+		discard;
 	//Out_Color = vec4(vertexGF.normal, 1.0);
  }

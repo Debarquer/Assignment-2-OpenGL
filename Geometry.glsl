@@ -44,11 +44,11 @@ void main()
 
 	for(int i = 0; i < gl_in.length(); i++)
 	{
-		gl_Position = projection * view * world * (gl_in[i].gl_Position + normal4);
+		gl_Position = projection * view * world * (gl_in[i].gl_Position - normal4);
 		vertexGF.color = vertexVG[i].color;
 		vertexGF.texPos = vertexVG[i].texPos;
 
-		gPosGF = gPosVG[i] + mat3(world) * normal;
+		gPosGF = gPosVG[i] - mat3(world) * normal;
 
 		EmitVertex();
 	}

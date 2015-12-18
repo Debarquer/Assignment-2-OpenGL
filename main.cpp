@@ -23,13 +23,19 @@
 
 using namespace std;
 
-const int numberOfBoxes = 100;
+const int numberOfBoxes = 1;
 const int numberOfVertices = numberOfBoxes*6;
 const int numberOfBoxesWidth = 1;
 const int numberOfBoxesHeight = 1;
 
 const int width = 640;
 const int height = 480;
+
+const int cameraX = 0;
+const int cameraY = 0;
+const int cameraZ = -1;
+
+const float rotationSpeed = -0.0005f;
 
 HWND InitWindow(HINSTANCE hInstance);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -160,33 +166,33 @@ void CreateTriangleData()
 				{
 				case 0:
 				{
-					triangleVertices[i + x*numberOfVertices + y*numberOfVertices*numberOfBoxesHeight] = { 1.0f * x + -0.5f, 1.0f * y + 0.5f, z * 1.0f,		0.5f, 0.5f, 0.5f,		0.0f, 0.0f };
+					triangleVertices[i + x*numberOfVertices + y*numberOfVertices*numberOfBoxesHeight] = { 1.0f * x + -0.5f, 1.0f * y + 0.5f, z * 1.0f,		1.0f, 0.0f, 0.0f,		0.0f, 0.0f };
 
 					break;
 				}
 				case 1:
 				{
-					triangleVertices[i + x*numberOfVertices + y*numberOfVertices*numberOfBoxesHeight] = { 1.0f * x + -0.5f, 1.0f * y + -0.5f, z * 1.0f,		0.5f, 0.5f, 0.5f,		0.0f, 1.0f };
+					triangleVertices[i + x*numberOfVertices + y*numberOfVertices*numberOfBoxesHeight] = { 1.0f * x + -0.5f, 1.0f * y + -0.5f, z * 1.0f,		0.0f, 1.0f, 0.0f,		0.0f, 1.0f };
 					break;
 				}
 				case 2:
 				{
-					triangleVertices[i + x*numberOfVertices + y*numberOfVertices*numberOfBoxesHeight] = { 1.0f * x + 0.5f, 1.0f * y + -0.5f, z * 1.0f,		0.5f, 0.5f, 0.5f,		1.0f, 1.0f };
+					triangleVertices[i + x*numberOfVertices + y*numberOfVertices*numberOfBoxesHeight] = { 1.0f * x + 0.5f, 1.0f * y + -0.5f, z * 1.0f,		0.0f, 0.0f, 1.0f,		1.0f, 1.0f };
 					break;
 				}
 				case 3:
 				{
-					triangleVertices[i + x*numberOfVertices + y*numberOfVertices*numberOfBoxesHeight] = { 1.0f * x + -0.5f, 1.0f * y + 0.5f, z * 1.0f,		0.5f, 0.5f, 0.5f,		0.0f, 0.0f };
+					triangleVertices[i + x*numberOfVertices + y*numberOfVertices*numberOfBoxesHeight] = { 1.0f * x + -0.5f, 1.0f * y + 0.5f, z * 1.0f,		1.0f, 0.0f, 0.0f,		0.0f, 0.0f };
 					break;
 				}
 				case 4:
 				{
-					triangleVertices[i + x*numberOfVertices + y*numberOfVertices*numberOfBoxesHeight] = { 1.0f * x + 0.5f, 1.0f * y + -0.5f, z * 1.0f,		0.5f, 0.5f, 0.5f,		1.0f, 1.0f };
+					triangleVertices[i + x*numberOfVertices + y*numberOfVertices*numberOfBoxesHeight] = { 1.0f * x + 0.5f, 1.0f * y + -0.5f, z * 1.0f,		0.0f, 1.0f, 0.0f,		1.0f, 1.0f };
 					break;
 				}
 				case 5:
 				{
-					triangleVertices[i + x*numberOfVertices + y*numberOfVertices*numberOfBoxesHeight] = { 1.0f * x + 0.5f, 1.0f * y + 0.5f,  z * 1.0f,		0.5f, 0.5f, 0.5f,		1.0f, 0.0f };
+					triangleVertices[i + x*numberOfVertices + y*numberOfVertices*numberOfBoxesHeight] = { 1.0f * x + 0.5f, 1.0f * y + 0.5f,  z * 1.0f,		0.0f, 0.0f, 1.0f,		1.0f, 0.0f };
 					z++;
 					break;
 				}
@@ -246,12 +252,12 @@ void Render()
 	glUniform1i(glGetUniformLocation(gShaderProgram, "ourTexture"), 0);
 
 	//Set the position of the light
-	lightPosition = glm::vec3(0.0f, 0.0f, -2.5f);
+	lightPosition = glm::vec3(0.0f, 0.0f, -2.0f);
 
 	//Set transform variables
-	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, -1.0f);
+	glm::vec3 cameraPos = glm::vec3(cameraX, cameraY, cameraZ);
 
-	glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 cameraTarget = glm::vec3(cameraX, cameraY, cameraZ + 1);
 	glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget); 
 
 	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -260,9 +266,9 @@ void Render()
 	glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
 	
 	//Modify transforms
-	world = glm::rotate(world, -0.0001f, glm::vec3(0.0f, 1.0f, 0.0f));
+	world = glm::rotate(world, rotationSpeed, glm::vec3(0.0f, 1.0f, 0.0f));
 	view = glm::lookAt(cameraPos, cameraTarget, up);
-	projection = glm::perspective(3.14f*0.45f, 640.0f/480.0f, 0.5f, 200.0f);
+	projection = glm::perspective(3.14f*0.45f, 640.0f/480.0f, 0.5f, 400.0f);
 
 	//Add transform to the shader
 	GLuint worldLoc = glGetUniformLocation(gShaderProgram, "world");

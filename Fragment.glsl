@@ -26,8 +26,9 @@ void main()
 	float angle = max(dot(lightNor, posNor), 0.0);
 
 	Out_Color = angle * texture(ourTexture, vertexGF.texPos);
+	//Out_Color = vertexGF.color * angle;
 
-	if(Out_Color.w < 0.2)
+	if(Out_Color.w < 0.1)
 		discard;
 	//Out_Color = vec4(vertexGF.normal, 1.0);
  }
